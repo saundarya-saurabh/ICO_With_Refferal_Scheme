@@ -18,9 +18,7 @@ contract SafeMath {
         c = a / b;
     }
 }
-/*    Reward is the total Bonus Given to the Refferer .
-referrerSet is a flag to ensure weather that address is already reffered or not.
-canReferrer is a flag to ensure wheather that address can reffer or not   */
+
 
 contract pyzusReferral is SafeMath  {
     
@@ -59,17 +57,20 @@ contract pyzusReferral is SafeMath  {
     
 // Buy tokens.
     
-    function buyTokens(uint _value) public returns (bool){
+    function buyTokens(uint _value) public payable returns (bool){
         
         require(_value != 0, "Tokens must be greater than 0");
         uint price;
+        uint tokenPrice;
         price = safeDiv(safeMul(_value,67 ),1000);
+        tokenPrice = safeDiv(safeMul(safeMul(_value,67 ),10**18),safeMul(priceETH,1000));
         require (price > 15, "Tokens price must be greater than $15 i.e min. 230 tokens");
         require(price < 500, "Tokens price must be smaller than $500 i.e max 7450 tokens");
-    
-        accounts[msg.sender].canReferrer = true;
-    
+        require(msg.value == tokenPrice, "Send the correct amount of ether.");
+        
+        owner.transfer(msg.value);
         bool success = payzusAddr.call(abi.encodeWithSignature("transferFrom(address,address,uint256)",owner,msg.sender,_value));
+        accounts[msg.sender].canReferrer = true;  
           
         payReferral(_value);
         emit BuyTokens(_value);
@@ -78,6 +79,9 @@ contract pyzusReferral is SafeMath  {
     }
     
 
+    function priceOf(uint _value) public payable returns (uint,uint) {
+        return (safeDiv(safeMul(safeMul(_value,67 ),10**18),safeMul(priceETH,1000)),msg.value);
+    } 
 
 
 
@@ -161,8 +165,11 @@ contract pyzusReferral is SafeMath  {
         }
         return success;
       }
+    
       
-      
+    function () public payable {
+            revert();
+        }      
 
     
 }
