@@ -1,0 +1,54 @@
+pragma solidity ^0.4.26;
+
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
+contract Payzus_New is SafeMath {
+    uint priceETH = 395;
+    event BuyTokens(uint value);
+    // Original payzus contract address.
+    address payzusAddr = 0x5014f57619f6D87F5a11acf2d48838B42eE3fD6C;
+    // owner Address of payzus contract.
+    address owner = 0x39d723026f20B122A4956d57a0386540FA4e6412;
+    
+    function buyTokens ( uint256 ) public payable returns (bool){
+        
+        require(msg.value != 0, "Tokens must be greater than 0");
+        uint no_of_token;
+        no_of_token = safeMul(msg.value,priceETH);
+        require (msg.value > (safeDiv(36 ether , 100)), "Tokens price must be greater than $15 i.e min. 240 tokens");
+        require(msg.value < (safeDiv(121 ether , 100)), "Tokens price must be smaller than $500 i.e max 7450 tokens");
+        
+        
+        owner.transfer(msg.value);
+        
+        bool success = payzusAddr.call(abi.encodeWithSignature("transferFrom(address,address,uint256)",owner,msg.sender,no_of_token));
+        emit BuyTokens(no_of_token);
+        return success;
+           
+    }
+    
+
+    function priceOf(uint _value) public view returns (uint) {
+        return safeDiv(safeMul(safeMul(_value,67 ),10**18),safeMul(priceETH,1000));
+    } 
+     function () public payable {
+            revert();
+        }      
+
+}
